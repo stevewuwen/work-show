@@ -1,0 +1,8 @@
+.venv
+docs
+kuaishou
+job_info.sqlite
+test*.json
+test.*
+config/settings.yaml
+**/*.pyc

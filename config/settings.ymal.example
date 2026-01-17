@@ -1,0 +1,21 @@
+database:
+  url: job_info.sqlite
+  table_name: jobs
+crawler:
+  max_consecutive_duplicates: 11
+  model: deepseek
+  gemini_api_key: 
+  deepseek_api_key: 
+sources:
+  - module: work_show.sources.web_bytedance_campus
+    class: WebByteDanceCampusSource
+    params:
+      start_page: 1
+  - module: work_show.sources.web_kuaishou_social
+    class: WebKuaishouSocialSource
+    params:
+      start_page: 1
+  # - module: work_show.sources.jsonl_file
+  #   class: FileJsonlSource
+  #   params:
+  #     jsonl_file_path: "data/jobs.jsonl"
