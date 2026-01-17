@@ -98,5 +98,4 @@ class CrawlerEngine:
         except Exception as e:
             logger.critical(f"Critical Engine Error: {e}")
         finally:
-            self.storage.close()
             logger.info(f"Crawling finished. Total new items: {self.total_saved}")
