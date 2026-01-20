@@ -8,19 +8,12 @@ from work_show.utils.logger import get_logger
 # 获取日志记录器
 logger = get_logger("Main")
 
-
-def load_config(path: str):
-    """加载YAML配置文件"""
-    with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
-
-
 def main():
     """
     主函数：动态加载、配置并多线程运行爬虫。
     """
     # 1. 加载配置
-    config = load_config("config/settings.yaml")
+    config = yaml.safe_load(open("config/settings.yaml", encoding='utf-8'))
     db_config = config["database"]
     crawler_config = config["crawler"]
     sources_config = config.get("sources", [])

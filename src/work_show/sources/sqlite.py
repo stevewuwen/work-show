@@ -9,7 +9,6 @@ class SqliteSource(Protocol):
     """
     只负责从特定来源获取数据，并解析为 Item 对象。不关心去重，也不关心存储。
     """
-    
 
     def fetch_items(self) -> Iterator[Item]:
         """生成器，逐个返回原始的被解析为dict的json对象"""

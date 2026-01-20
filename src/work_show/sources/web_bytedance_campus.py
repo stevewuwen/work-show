@@ -1,5 +1,4 @@
 from DrissionPage import WebPage
-import pandas as pd
 from dataclasses import dataclass
 from typing import Iterator
 from ..core.models import Item
@@ -7,7 +6,6 @@ from ..utils.call_llm import get_json_data
 import json
 import time
 import random
-from rich import inspect
 import os
 from ..core.protocols import DataStorage
 from typing import Any
