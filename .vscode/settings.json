@@ -1,43 +1,11 @@
 {
-    "workbench.colorCustomizations": {
-        /* --- 1. 核心编辑器颜色 (选中、高亮) --- */
-        // 选中文本的背景色 (使用半透明的蓝紫色，不遮挡代码)
-        "editor.selectionBackground": "#5a55e955",
-        // 选中内容相同时，其他匹配项的高亮颜色
-        "editor.selectionHighlightBackground": "#5a55e933",
-        // 查找匹配项的颜色
-        "editor.findMatchBackground": "#00d2d366",
-        "editor.findMatchHighlightBackground": "#00d2d333",
-        // 当前行高亮 (这里设计为只有左侧边缘和底部微弱边框，比整行变色更高级)
-        "editor.lineHighlightBackground": "#00000000", // 背景透明
-        "editor.lineHighlightBorder": "#5a55e944", // 边框微亮
-        /* --- 2. 界面强调色 (状态栏、进度条) --- */
-        // 底部状态栏背景 (深邃的蓝紫色)
-        "statusBar.background": "#4834d4",
-        "statusBar.foreground": "#ffffff",
-        // 调试时的状态栏颜色 (橙色警告感)
-        "statusBar.debuggingBackground": "#e056fd",
-        // 顶部加载进度条 (亮青色，一眼就能看到在加载)
-        "progressBar.background": "#00d2d3",
-        /* --- 3. 侧边栏与标签页 (Activity Bar & Tabs) --- */
-        // 侧边栏图标选中时的颜色
-        "activityBar.activeBorder": "#00d2d3",
-        "activityBar.foreground": "#00d2d3",
-        // 侧边栏未选中图标的颜色
-        "activityBar.inactiveForeground": "#ffffff66",
-        // 当前激活的标签页顶部线条 (强调当前文件)
-        "tab.activeBorderTop": "#00d2d3",
-        // 激活标签页的文字颜色
-        "tab.activeForeground": "#ffffff",
-        /* --- 4. 列表与树状图 (文件资源管理器) --- */
-        // 鼠标悬停在文件列表时的背景
-        "list.hoverBackground": "#5a55e922",
-        // 选中文件的背景
-        "list.activeSelectionBackground": "#5a55e944",
-        "list.activeSelectionForeground": "#00d2d3",
-        /* --- 5. 滚动条 (更加隐形，滑动时才明显) --- */
-        "scrollbarSlider.background": "#ffffff11",
-        "scrollbarSlider.hoverBackground": "#ffffff33",
-        "scrollbarSlider.activeBackground": "#00d2d388"
-    }
+    "sqltools.useNodeRuntime": true,
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "jobs",
+            "database": "${workspaceFolder:work-show}/job_info.sqlite"
+        }
+    ]
 }

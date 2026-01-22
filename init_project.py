@@ -189,7 +189,7 @@ def init_database() -> None:
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
     # 读取SQL文件
-    sql_file = Path("sql/sql.sql")
+    sql_file = Path("sql/create_table.sql")
     if not sql_file.exists():
         print(f"SQL文件不存在: {sql_file}")
         return

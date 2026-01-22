@@ -12,6 +12,7 @@ dependencies = [
     "google-genai>=1.58.0",
     "jsonpath-ng>=1.7.0",
     "litellm>=1.80.16",
+    "socksio>=1.0.0",
 ]
 
 [build-system]
