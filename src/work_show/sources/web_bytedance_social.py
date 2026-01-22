@@ -13,7 +13,7 @@ from datetime import datetime
 
 
 @dataclass
-class WebByteDanceCampusSource:
+class WebByteDanceSocialSource:
     web_page: WebPage
     start_page: int = 1
 
@@ -57,7 +57,7 @@ class WebByteDanceCampusSource:
             if self._skip_count > 0:
                 i += self._skip_count
                 self._skip_count = 0
-
+            # TODO 招聘字节的社招 https://jobs.bytedance.com/experienced/position
             p.get(
                 f"https://jobs.bytedance.com/campus/position?keywords=&category=&location=&project=&type=&job_hot_flag=&current={i}&limit=100&functionCategory=&tag="
             )

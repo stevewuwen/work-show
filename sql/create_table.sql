@@ -5,7 +5,6 @@ CREATE TABLE IF NOT EXISTS jobs (
     work_type TEXT,                   -- 对应 work_type (str)
     job_url TEXT,                     -- 对应 job_url (str)
     title TEXT NOT NULL,              -- 对应 title (str)
-    department TEXT,                  -- 对应 department (str)
     city TEXT,                        -- 对应 city (list[str]), 存为 JSON 字符串
     category TEXT,                    -- 对应 category (str)
     experience_req TEXT,              -- 对应 experience_req (str)

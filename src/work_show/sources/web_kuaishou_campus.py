@@ -31,7 +31,7 @@ def get_mapping_table():
 
 
 @dataclass
-class WebKuaishouSocialSource:
+class WebKuaishouCampusSource:
     web_page: WebPage
     start_page: int = 1
 
@@ -69,18 +69,18 @@ class WebKuaishouSocialSource:
                 "positionNatureCode": "$.positionNatureCode",
                 "ifSecret": "$.ifSecret",
                 "headCountUsed": "$.headCountUsed",
-                "workLocationsCode": "$.workLocationsCode",
+                "workLocationsCode": "$.workLocationDicts",
             },
         }
         mp = json.loads(mapping_table)
-        work_types = ["social", "trainee"]
+        work_types = ["fulltime", "intern"]
         while True:
             if self._skip_count > 0:
                 i += self._skip_count
                 self._skip_count = 0
             for work_type in work_types:
                 p.get(
-                    f"https://zhaopin.kuaishou.cn/recruit/e/#/official/{work_type}/?workLocationCode=domestic&pageNum={i}"
+                    f"https://campus.kuaishou.cn/recruit/campus/e/#/campus/jobs?pageNum=1&positionNatureCode={work_type}"
                 )
                 res = p.listen.wait()
                 res_list = res.response.body.get("result")["list"]
@@ -90,25 +90,18 @@ class WebKuaishouSocialSource:
                     t = Item.transform_with_jsonpath(schema_dict, item)
                     t.source_platform = "快手官网"
                     if t.work_type == None or t.work_type == "":
-                        t.work_type = "社招" if work_type == "social" else "实习"
+                        t.work_type = "校招" if work_type == "fulltime" else "实习"
                     if t.job_url == None or t.job_url == "":
-                        t.job_url = f"https://zhaopin.kuaishou.cn/recruit/e/#/official/{work_type}/job-info/{t.job_id}"
+                        t.job_url = f"https://campus.kuaishou.cn/recruit/campus/e/#/campus/job-info/{t.job_id}"
                     if t.crawl_date == None or t.crawl_date == "":
                         t.crawl_date = int(time.time())
                     if t.company_name == None or t.company_name == "":
                         t.company_name = "快手"
                     if t.extra_info and "workLocationsCode" in t.extra_info:
-                        t.city = [
-                            mp.get(x, "未知") for x in t.extra_info["workLocationsCode"]
-                        ]
+                        t.city = [x["name"] for x in t.extra_info["workLocationsCode"]]
                     else:
-                        t.city = [mp.get(t.city, "未知")]
-                    try:
-                        t.publish_date = int(
-                            datetime.fromisoformat(t.publish_date).timestamp()
-                        )
-                    except Exception as e:
-                        pass
+                        t.city = ["未知"]
+                    t.publish_date = t.publish_date // 1000
                     t.experience_req = mp.get(t.experience_req, "未知")
                     t.category = mp.get(t.category, "未知")
                     t.job_id = str(t.job_id)

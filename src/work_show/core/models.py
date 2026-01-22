@@ -17,7 +17,6 @@ class Item:
     work_type: str | None = None  # 工作种类，如 "trainee", "social", "campus"
     job_url: str | None = None
     title: str | None = None  # 工作的名称
-    department: str | None = None  # 工作的部门， 如"技术部", "工程部", "运营部"
     city: list[str] | None = None  # 工作的城市
     category: str | None = (
         None  # 工作分类， 如"工程类","算法类","产品类","运营类","设计类","分析类"

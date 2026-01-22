@@ -4,16 +4,18 @@ import threading
 from work_show.engine.crawler import CrawlerEngine
 from work_show.storage.sql_storage import SqliteStorage
 from work_show.utils.logger import get_logger
+from DrissionPage import WebPage
 
 # 获取日志记录器
-logger = get_logger("Main")
+logger = get_logger(__name__)
+
 
 def main():
     """
     主函数：动态加载、配置并多线程运行爬虫。
     """
     # 1. 加载配置
-    config = yaml.safe_load(open("config/settings.yaml", encoding='utf-8'))
+    config = yaml.safe_load(open("config/settings.yaml", encoding="utf-8"))
     db_config = config["database"]
     crawler_config = config["crawler"]
     sources_config = config.get("sources", [])
@@ -31,6 +33,7 @@ def main():
     )
 
     threads = []
+    web_page = WebPage()
     # 3. 遍历配置中的每个源，为其创建和启动一个线程
     for source_info in sources_config:
         try:
@@ -39,7 +42,9 @@ def main():
             # 获取类
             SourceClass = getattr(module, source_info["class"])
             # 使用提供的参数实例化
-            source_instance = SourceClass(**source_info.get("params", {}))
+            source_instance = SourceClass(
+                web_page=web_page, **source_info.get("params", {})
+            )
 
             # 为每个源创建一个独立的引擎
             engine = CrawlerEngine(
@@ -57,8 +62,6 @@ def main():
                 f"Failed to start source {source_info.get('class', 'Unknown')}: {e}"
             )
 
-    
-    
     # 4. 等待所有线程完成
     for thread in threads:
         thread.join()
