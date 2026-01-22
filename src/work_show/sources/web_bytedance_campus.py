@@ -59,7 +59,7 @@ class WebByteDanceCampusSource:
                 self._skip_count = 0
 
             p.get(
-                f"https://jobs.bytedance.com/campus/position?keywords=&category=&location=&project=&type=&job_hot_flag=&current={i}&limit=100&functionCategory=&tag="
+                f"https://jobs.bytedance.com/campus/position?keywords=&category=&location=&project=&type=&job_hot_flag=&current={i}&limit=20&functionCategory=&tag="
             )
             res = p.listen.wait()
             res_list = res.response.body.get("data")["job_post_list"]

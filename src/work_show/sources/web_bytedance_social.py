@@ -10,6 +10,7 @@ import os
 from ..core.protocols import DataStorage
 from typing import Any
 from datetime import datetime
+from rich import inspect
 
 
 @dataclass
@@ -59,7 +60,7 @@ class WebByteDanceSocialSource:
                 self._skip_count = 0
             # TODO 招聘字节的社招 https://jobs.bytedance.com/experienced/position
             p.get(
-                f"https://jobs.bytedance.com/campus/position?keywords=&category=&location=&project=&type=&job_hot_flag=&current={i}&limit=100&functionCategory=&tag="
+                f"https://jobs.bytedance.com/experienced/position?keywords=&category=&location=&project=&type=&job_hot_flag=&current={i}&limit=20&functionCategory=&tag="
             )
             res = p.listen.wait()
             res_list = res.response.body.get("data")["job_post_list"]
@@ -69,7 +70,7 @@ class WebByteDanceSocialSource:
                 t.company_name = "字节跳动"
                 if t.job_url == None or t.job_url == "":
                     t.job_url = (
-                        f"https://jobs.bytedance.com/campus/position/{t.job_id}/detail"
+                        f"https://jobs.bytedance.com/experienced/position/{t.job_id}/detail"
                     )
                 t.crawl_date = int(time.time())
                 if t.extra_info and "city_list" in t.extra_info:
@@ -80,7 +81,7 @@ class WebByteDanceSocialSource:
                     t.publish_date = t.publish_date // 1000
                 except Exception as e:
                     pass
-                t.work_type = "校招" if t.work_type == "正式" else "实习"
+                t.work_type = "社招"
                 t.job_id = str(t.job_id)
                 yield t
             i += 1

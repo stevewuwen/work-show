@@ -82,6 +82,7 @@ class WebKuaishouSocialSource:
                 p.get(
                     f"https://zhaopin.kuaishou.cn/recruit/e/#/official/{work_type}/?workLocationCode=domestic&pageNum={i}"
                 )
+                print(i)
                 res = p.listen.wait()
                 res_list = res.response.body.get("result")["list"]
                 if res_list == None or len(res_list) == 0:
