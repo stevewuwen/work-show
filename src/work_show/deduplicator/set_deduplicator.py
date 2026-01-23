@@ -34,7 +34,7 @@ class SetDeduplicator:
                 )
                 return DedupResponse(DedupAction.STOP)  # 表示退出循环，停止爬取
             if self.consecutive_dup >= 3 and self.consecutive_dup % 3 == 0:
-                skip_count = random.randint(0, self.consecutive_dup)
+                skip_count = random.randint(0, self.consecutive_dup // 3)
                 return DedupResponse(DedupAction.SKIP_PAGES, args=skip_count)
             return DedupResponse(DedupAction.SKIP)
         else:

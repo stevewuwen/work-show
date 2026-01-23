@@ -55,23 +55,20 @@ class WebByteDanceSocialSource:
         }
 
         while True:
-            if self._skip_count > 0:
-                i += self._skip_count
-                self._skip_count = 0
             # TODO 招聘字节的社招 https://jobs.bytedance.com/experienced/position
             p.get(
                 f"https://jobs.bytedance.com/experienced/position?keywords=&category=&location=&project=&type=&job_hot_flag=&current={i}&limit=20&functionCategory=&tag="
             )
             res = p.listen.wait()
             res_list = res.response.body.get("data")["job_post_list"]
+            if len(res_list) == 0:
+                break
             for item in res_list:
                 t = Item.transform_with_jsonpath(schema_dict, item)
                 t.source_platform = "字节官网"
                 t.company_name = "字节跳动"
                 if t.job_url == None or t.job_url == "":
-                    t.job_url = (
-                        f"https://jobs.bytedance.com/experienced/position/{t.job_id}/detail"
-                    )
+                    t.job_url = f"https://jobs.bytedance.com/experienced/position/{t.job_id}/detail"
                 t.crawl_date = int(time.time())
                 if t.extra_info and "city_list" in t.extra_info:
                     t.city = [x["name"] for x in t.extra_info["city_list"]]
@@ -84,6 +81,10 @@ class WebByteDanceSocialSource:
                 t.work_type = "社招"
                 t.job_id = str(t.job_id)
                 yield t
+                if self._skip_count > 0:
+                    i += self._skip_count
+                    self._skip_count = 0
+                    break
             i += 1
             time.sleep(1 + random.random() * 20)
         return "没有任何数据了"

@@ -1,4 +1,4 @@
-from DrissionPage import WebPage
+from DrissionPage import ChromiumPage
 from dataclasses import dataclass
 from typing import Iterator
 from ..core.models import Item
@@ -10,11 +10,12 @@ import os
 from ..core.protocols import DataStorage
 from typing import Any
 from datetime import datetime
+from rich import inspect
 
 
 def get_mapping_table():
     mp = {}
-    p2 = WebPage()
+    p2 = Chromium()
     p2.listen.start(
         "api/v1/dictionary/batch?types=workLocation,positionCategory,positionExperience,positionNature"
     )
@@ -32,7 +33,7 @@ def get_mapping_table():
 
 @dataclass
 class WebKuaishouCampusSource:
-    web_page: WebPage
+    web_page: ChromiumPage
     start_page: int = 1
 
     def __post_init__(self):
@@ -73,45 +74,43 @@ class WebKuaishouCampusSource:
             },
         }
         mp = json.loads(mapping_table)
-        work_types = [
-            "fulltime",
-            "intern",
-        ]  # TODO 添加逻辑，如果返回的数码为0，下次就不要去请求了
+        work_type = "intern"
+        i = 1
         while True:
-            if self._skip_count > 0:
-                i += self._skip_count
-                self._skip_count = 0
-            for work_type in work_types:
-                p.get(
-                    f"https://campus.kuaishou.cn/recruit/campus/e/#/campus/jobs?pageNum={i}&positionNatureCode={work_type}"
-                )
-                print(i)
-                res = p.listen.wait()
-                res_list = res.response.body.get("result")["list"]
-                if res_list == None or len(res_list) == 0:
+            # TODO 这里需要修改，只能通过下一页进行访问，无法通过链接跳转到指定页. 或者每次到达网站之后需要手动刷新,网站是有状态的，第一次只能访问第一页！！！
+            page_url = f"https://campus.kuaishou.cn/recruit/campus/e/#/campus/jobs?pageNum={i}&positionNatureCode={work_type}"
+            p.get(page_url)
+            p.refresh()
+            res = p.listen.wait()
+            res_list = res.response.body.get("result")["list"]
+            if res_list == None or len(res_list) == 0:
+                break
+            for item in res_list:
+                t = Item.transform_with_jsonpath(schema_dict, item)
+                t.source_platform = "快手官网"
+                if t.work_type == None or t.work_type == "":
+                    t.work_type = "校招" if work_type == "fulltime" else "实习"
+                if t.job_url == None or t.job_url == "":
+                    t.job_url = f"https://campus.kuaishou.cn/recruit/campus/e/#/campus/job-info/{t.job_id}"
+                if t.crawl_date == None or t.crawl_date == "":
+                    t.crawl_date = int(time.time())
+                if t.company_name == None or t.company_name == "":
+                    t.company_name = "快手"
+                if t.extra_info and "workLocationsCode" in t.extra_info:
+                    t.city = [x["name"] for x in t.extra_info["workLocationsCode"]]
+                else:
+                    t.city = ["未知"]
+                t.publish_date = t.publish_date // 1000
+                t.experience_req = mp.get(t.experience_req, "未知")
+                t.category = mp.get(t.category, "未知")
+                t.job_id = str(t.job_id)
+                yield t
+                if self._skip_count > 0:
+                    i += self._skip_count
+                    self._skip_count = 0
                     break
-                for item in res_list:
-                    t = Item.transform_with_jsonpath(schema_dict, item)
-                    t.source_platform = "快手官网"
-                    if t.work_type == None or t.work_type == "":
-                        t.work_type = "校招" if work_type == "fulltime" else "实习"
-                    if t.job_url == None or t.job_url == "":
-                        t.job_url = f"https://campus.kuaishou.cn/recruit/campus/e/#/campus/job-info/{t.job_id}"
-                    if t.crawl_date == None or t.crawl_date == "":
-                        t.crawl_date = int(time.time())
-                    if t.company_name == None or t.company_name == "":
-                        t.company_name = "快手"
-                    if t.extra_info and "workLocationsCode" in t.extra_info:
-                        t.city = [x["name"] for x in t.extra_info["workLocationsCode"]]
-                    else:
-                        t.city = ["未知"]
-                    t.publish_date = t.publish_date // 1000
-                    t.experience_req = mp.get(t.experience_req, "未知")
-                    t.category = mp.get(t.category, "未知")
-                    t.job_id = str(t.job_id)
-                    yield t
             i += 1
-            time.sleep(1 + random.random() * 20)
+            time.sleep(1 + random.random() * 2)
         return "没有任何数据了"
 
     def extract_by_llm(self, item: Item) -> Item:

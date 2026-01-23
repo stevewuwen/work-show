@@ -17,8 +17,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     requirement TEXT,                 -- 对应 requirement (str)
     requirement_keywords TEXT,        -- 对应 requirement_keywords (list[str]), 存为 JSON 字符串
     publish_date INTEGER,             -- 对应 publish_date (int), 时间戳
-    crawl_date INTEGER,               -- 对应 crawl_date (int), 时间戳
-    extra_info TEXT                   -- 对应 extra_info (dict), 存为 JSON 字符串
+    crawl_date INTEGER               -- 对应 crawl_date (int), 时间戳
 );
 
 -- 可选：创建索引以加快常见查询速度（例如按发布时间或城市查询）

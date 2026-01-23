@@ -55,7 +55,6 @@ class SqliteStorage(DataStorage):
             json.dumps(item.requirement_keywords, ensure_ascii=False),  # list -> json
             item.publish_date,
             item.crawl_date,
-            json.dumps(item.extra_info, ensure_ascii=False),  # dict -> json
         )
 
     def save(self, item: Item) -> None:
@@ -67,9 +66,8 @@ class SqliteStorage(DataStorage):
                         job_id, company_name, source_platform, work_type, job_url,
                         title, city, category, experience_req,
                         education_req, job_level, salary_min, salary_max, description,
-                        description_keywords, requirement, requirement_keywords, publish_date, crawl_date,
-                        extra_info
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        description_keywords, requirement, requirement_keywords, publish_date, crawl_date
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """
                 self.cursor.execute(sql, self._adapt_item(item))
                 self.conn.commit()
@@ -89,9 +87,8 @@ class SqliteStorage(DataStorage):
                         job_id, company_name, source_platform, work_type, job_url,
                         title, city, category, experience_req,
                         education_req, job_level, salary_min, salary_max, description,
-                        description_keywords, requirement, requirement_keywords, publish_date, crawl_date,
-                        extra_info
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        description_keywords, requirement, requirement_keywords, publish_date, crawl_date
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """
                 # 将所有 item 转换为元组列表
                 data = [self._adapt_item(item) for item in items]

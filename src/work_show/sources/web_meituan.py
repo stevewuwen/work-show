@@ -79,10 +79,10 @@ class WebMeiTuanSource:
                         t.publish_date = t.publish_date // 1000
                     except Exception as e:
                         pass
-                    if t.requirement is None or t.requirement is "":
+                    if t.requirement is None or t.requirement == "":
                         if (
                             t.extra_info.get("requirement", "") is not None
-                            and t.extra_info.get("requirement", "") is not ""
+                            and t.extra_info.get("requirement", "") != ""
                         ):
                             t.requirement = t.extra_info.get("requirement", "")
                     if t.work_type == "3":
@@ -93,6 +93,10 @@ class WebMeiTuanSource:
                         t.work_type = "校招"
                     t.job_id = str(t.job_id)
                     yield t
+                    if self._skip_count > 0:
+                        i += self._skip_count
+                        self._skip_count = 0
+                        break
             i += 1
             time.sleep(1 + random.random() * 20)
         return "没有任何数据了"
@@ -118,5 +122,5 @@ class WebMeiTuanSource:
             or filters["source_platform"] == None
             or filters["source_platform"] == ""
         ):
-            filters["source_platform"] = "字节官网"
+            filters["source_platform"] = "美团官网"
         return data_storage.fetch_all_fingerprints(filters)

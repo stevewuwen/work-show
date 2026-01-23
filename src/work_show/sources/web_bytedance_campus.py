@@ -54,15 +54,13 @@ class WebByteDanceCampusSource:
         }
 
         while True:
-            if self._skip_count > 0:
-                i += self._skip_count
-                self._skip_count = 0
-
             p.get(
                 f"https://jobs.bytedance.com/campus/position?keywords=&category=&location=&project=&type=&job_hot_flag=&current={i}&limit=20&functionCategory=&tag="
             )
             res = p.listen.wait()
             res_list = res.response.body.get("data")["job_post_list"]
+            if len(res_list) == 0:
+                break
             for item in res_list:
                 t = Item.transform_with_jsonpath(schema_dict, item)
                 t.source_platform = "字节官网"
@@ -83,6 +81,10 @@ class WebByteDanceCampusSource:
                 t.work_type = "校招" if t.work_type == "正式" else "实习"
                 t.job_id = str(t.job_id)
                 yield t
+                if self._skip_count > 0:
+                    i += self._skip_count
+                    self._skip_count = 0
+                    break
             i += 1
             time.sleep(1 + random.random() * 20)
         return "没有任何数据了"

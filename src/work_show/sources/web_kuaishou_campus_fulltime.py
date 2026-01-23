@@ -1,4 +1,4 @@
-from DrissionPage import WebPage
+from DrissionPage import ChromiumPage
 from dataclasses import dataclass
 from typing import Iterator
 from ..core.models import Item
@@ -10,11 +10,12 @@ import os
 from ..core.protocols import DataStorage
 from typing import Any
 from datetime import datetime
+from rich import inspect
 
 
 def get_mapping_table():
     mp = {}
-    p2 = WebPage()
+    p2 = Chromium()
     p2.listen.start(
         "api/v1/dictionary/batch?types=workLocation,positionCategory,positionExperience,positionNature"
     )
@@ -31,8 +32,8 @@ def get_mapping_table():
 
 
 @dataclass
-class WebKuaishouSocialSource:
-    web_page: WebPage
+class WebKuaishouCampusSource:
+    web_page: ChromiumPage
     start_page: int = 1
 
     def __post_init__(self):
@@ -69,53 +70,47 @@ class WebKuaishouSocialSource:
                 "positionNatureCode": "$.positionNatureCode",
                 "ifSecret": "$.ifSecret",
                 "headCountUsed": "$.headCountUsed",
-                "workLocationsCode": "$.workLocationsCode",
+                "workLocationsCode": "$.workLocationDicts",
             },
         }
         mp = json.loads(mapping_table)
-        work_types = ["social", "trainee"]
+        work_type = "fulltime"
+        i = 1
         while True:
-            for work_type in work_types:
-                p.get(
-                    f"https://zhaopin.kuaishou.cn/recruit/e/#/official/{work_type}/?workLocationCode=domestic&pageNum={i}"
-                )
-                res = p.listen.wait()
-                res_list = res.response.body.get("result")["list"]
-                if res_list == None or len(res_list) == 0:
+            # TODO 这里需要修改，只能通过下一页进行访问，无法通过链接跳转到指定页. 或者每次到达网站之后需要手动刷新,网站是有状态的，第一次只能访问第一页！！！
+            page_url = f"https://campus.kuaishou.cn/recruit/campus/e/#/campus/jobs?pageNum={i}&positionNatureCode={work_type}"
+            p.get(page_url)
+            p.refresh()
+            res = p.listen.wait()
+            res_list = res.response.body.get("result")["list"]
+            if res_list == None or len(res_list) == 0:
+                break
+            for item in res_list:
+                t = Item.transform_with_jsonpath(schema_dict, item)
+                t.source_platform = "快手官网"
+                if t.work_type == None or t.work_type == "":
+                    t.work_type = "校招" if work_type == "fulltime" else "实习"
+                if t.job_url == None or t.job_url == "":
+                    t.job_url = f"https://campus.kuaishou.cn/recruit/campus/e/#/campus/job-info/{t.job_id}"
+                if t.crawl_date == None or t.crawl_date == "":
+                    t.crawl_date = int(time.time())
+                if t.company_name == None or t.company_name == "":
+                    t.company_name = "快手"
+                if t.extra_info and "workLocationsCode" in t.extra_info:
+                    t.city = [x["name"] for x in t.extra_info["workLocationsCode"]]
+                else:
+                    t.city = ["未知"]
+                t.publish_date = t.publish_date // 1000
+                t.experience_req = mp.get(t.experience_req, "未知")
+                t.category = mp.get(t.category, "未知")
+                t.job_id = str(t.job_id)
+                yield t
+                if self._skip_count > 0:
+                    i += self._skip_count
+                    self._skip_count = 0
                     break
-                for item in res_list:
-                    t = Item.transform_with_jsonpath(schema_dict, item)
-                    t.source_platform = "快手官网"
-                    if t.work_type == None or t.work_type == "":
-                        t.work_type = "社招" if work_type == "social" else "实习"
-                    if t.job_url == None or t.job_url == "":
-                        t.job_url = f"https://zhaopin.kuaishou.cn/recruit/e/#/official/{work_type}/job-info/{t.job_id}"
-                    if t.crawl_date == None or t.crawl_date == "":
-                        t.crawl_date = int(time.time())
-                    if t.company_name == None or t.company_name == "":
-                        t.company_name = "快手"
-                    if t.extra_info and "workLocationsCode" in t.extra_info:
-                        t.city = [
-                            mp.get(x, "未知") for x in t.extra_info["workLocationsCode"]
-                        ]
-                    else:
-                        t.city = [mp.get(t.city, "未知")]
-                    try:
-                        t.publish_date = int(
-                            datetime.fromisoformat(t.publish_date).timestamp()
-                        )
-                    except Exception as e:
-                        pass
-                    t.experience_req = mp.get(t.experience_req, "未知")
-                    t.category = mp.get(t.category, "未知")
-                    t.job_id = str(t.job_id)
-                    yield t
-                    if self._skip_count > 0:
-                        i += self._skip_count
-                        self._skip_count = 0
-                        break
             i += 1
-            time.sleep(1 + random.random() * 20)
+            time.sleep(1 + random.random() * 2)
         return "没有任何数据了"
 
     def extract_by_llm(self, item: Item) -> Item:
@@ -230,31 +225,67 @@ mapping_table = """{
   "5": "3-5年",
   "6": "5-10年",
   "7": "10年以上",
-  "B012": "客服类",
-  "J0001": "技术类",
-  "B009": "工程类",
-  "B008": "算法类",
-  "B003": "产品类",
-  "B004": "职能类",
-  "B005": "运营类",
-  "B006": "市场类",
-  "B002": "设计类",
-  "B010": "战略支持类",
-  "J0012": "工程类",
-  "B011": "战略分析类",
-  "B001": "技术类",
-  "J0011": "算法类",
-  "J0005": "产品类",
-  "J0004": "运营类",
-  "J0003": "设计类",
-  "J0014": "分析类",
-  "J0013": "战略类",
-  "J0006": "市场类",
-  "J0002": "职能类",
-  "J0007": "客服类",
-  "J0008": "审核类",
-  "J0009": "内容评级类",
-  "J0015": "销售及支持类",
-  "J0010": "其它类",
+  "B012": "客服",
+  "J0001": "技术",
+  "B009": "工程",
+  "B008": "算法",
+  "B003": "产品",
+  "B004": "职能",
+  "B005": "运营",
+  "B006": "市场",
+  "B002": "设计",
+  "B010": "战略支持",
+  "J0012": "工程",
+  "B011": "战略分析",
+  "B001": "技术",
+  "J0011": "算法",
+  "J1001": "算法",
+  "J1002": "算法",
+  "J1003": "算法",
+  "J1004": "算法",
+  "J1005": "算法",
+  "J1006": "算法",
+  "J1007": "算法",
+  "J1008": "算法",
+  "J1009": "算法",
+  "J1010": "算法",
+  "J1011": "算法",
+  "J1012": "算法",
+  "J1013": "算法",
+  "J1014": "工程",
+  "J1015": "工程",
+  "J1016": "工程",
+  "J1017": "工程",
+  "J1018": "工程",
+  "J1019": "工程",
+  "J1020": "工程",
+  "J1021": "产品",
+  "J1026": "产品",
+  "J1022": "产品",
+  "J1023": "产品",
+  "J1024": "产品",
+  "J1025": "产品",
+  "J1027": "运营",
+  "J1028": "运营",
+  "J1029": "运营",
+  "J1030": "运营",
+  "J1031": "运营",
+  "J1032": "运营",
+  "J1033": "运营",
+  "J1034": "运营",
+  "J1035": "运营",
+  "J1036": "运营",
+  "J0005": "产品",
+  "J0004": "运营",
+  "J0003": "设计",
+  "J0014": "分析",
+  "J0013": "战略",
+  "J0006": "市场",
+  "J0002": "职能",
+  "J0007": "客服",
+  "J0008": "审核",
+  "J0009": "内容评级",
+  "J0015": "销售及支持",
+  "J0010": "其它",
   "B007": "其他"
 }"""
