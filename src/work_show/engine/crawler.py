@@ -48,6 +48,7 @@ class CrawlerEngine:
             item = self.source.extract_by_llm(item)
             self.storage.save(item)
             self.total_saved += 1
+            logger.info(f"{self.source.__class__.__name__}写入成功")
             if self.total_saved % 100 == 0:
                 logger.info(
                     f"Progress: Saved {self.total_saved} items..., Source: {item.source_platform}"

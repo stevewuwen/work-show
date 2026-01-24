@@ -77,7 +77,6 @@ class WebKuaishouCampusSource:
         work_type = "fulltime"
         i = 1
         while True:
-            # TODO 这里需要修改，只能通过下一页进行访问，无法通过链接跳转到指定页. 或者每次到达网站之后需要手动刷新,网站是有状态的，第一次只能访问第一页！！！
             page_url = f"https://campus.kuaishou.cn/recruit/campus/e/#/campus/jobs?pageNum={i}&positionNatureCode={work_type}"
             p.get(page_url)
             p.refresh()
