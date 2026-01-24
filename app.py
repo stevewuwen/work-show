@@ -532,126 +532,129 @@ with tab4:
 # ============================================================
 # Tab 5: 关键词词云
 # ============================================================
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud
+from collections import Counter
+import os
+import requests
+
+# --- 辅助函数定义区 ---
+
+
+@st.cache_resource
+def get_chinese_font():
+    """
+    获取中文字体路径。
+    如果本地不存在，则自动下载 SimHei.ttf (黑体)。
+    """
+    font_name = "SimHei.ttf"
+    # 这里使用一个稳定的 GitHub 镜像源或原始源下载字体
+    # SimHei 是非常常用的通用中文字体
+    font_url = "https://github.com/StellarCN/scp_zh/raw/master/fonts/SimHei.ttf"
+
+    # 检查当前目录下是否存在字体文件
+    if not os.path.exists(font_name):
+        with st.spinner(f"正在下载中文字体 ({font_name})...，初次加载可能需要几秒钟"):
+            try:
+                response = requests.get(font_url, timeout=30)
+                response.raise_for_status()
+                with open(font_name, "wb") as f:
+                    f.write(response.content)
+            except Exception as e:
+                st.error(f"字体下载失败: {e}")
+                # 下载失败时尝试回退到系统字体逻辑（虽然在云端可能无效）
+                import platform
+
+                system = platform.system()
+                if system == "Windows":
+                    return "C:/Windows/Fonts/msyh.ttc"
+                elif system == "Darwin":
+                    return "/System/Library/Fonts/PingFang.ttc"
+                else:
+                    return "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc"
+
+    return font_name
+
+
+def plot_wordcloud_in_streamlit(keywords_list, title, cmap="viridis"):
+    """
+    生成并显示词云的通用函数
+    """
+    st.markdown(f"#### {title}")
+
+    if not keywords_list:
+        st.info(f"暂无{title}数据")
+        return
+
+    # 统计词频
+    freq = Counter(keywords_list)
+
+    # 获取字体路径
+    font_path = get_chinese_font()
+
+    try:
+        wc = WordCloud(
+            width=800,
+            height=400,
+            background_color="white",
+            font_path=font_path,  # 使用下载或指定的字体
+            max_words=100,
+            colormap=cmap,
+            random_state=42,
+        ).generate_from_frequencies(freq)
+
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.imshow(wc, interpolation="bilinear")
+        ax.axis("off")
+        st.pyplot(fig)
+        plt.close(fig)  # 关闭图形释放内存
+
+        # 显示词频统计表格
+        with st.expander(f"查看 {title} 词频 (Top 20)"):
+            top_df = pd.DataFrame(freq.most_common(20), columns=["关键词", "频次"])
+            st.dataframe(top_df, use_container_width=True)
+
+    except Exception as e:
+        st.error(f"生成词云时发生错误: {e}")
+
+
+# --- 主逻辑区 ---
+
 with tab5:
     st.subheader("☁️ 关键词词云")
 
-    # 合并所有关键词
-    all_desc_keywords = []
-    all_req_keywords = []
+    # 准备数据：使用列表推导式更高效地展平列表
+    # 假设 filtered_df 已经在上下文中定义
 
-    for keywords in filtered_df["description_keywords"]:
-        if isinstance(keywords, list):
-            all_desc_keywords.extend(keywords)
+    # 处理职位描述关键词
+    all_desc_keywords = [
+        k
+        for keywords in filtered_df["description_keywords"]
+        if isinstance(keywords, list)
+        for k in keywords
+    ]
 
-    for keywords in filtered_df["requirement_keywords"]:
-        if isinstance(keywords, list):
-            all_req_keywords.extend(keywords)
+    # 处理职位要求关键词
+    all_req_keywords = [
+        k
+        for keywords in filtered_df["requirement_keywords"]
+        if isinstance(keywords, list)
+        for k in keywords
+    ]
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("#### 职位描述关键词")
-        if all_desc_keywords:
-            desc_freq = Counter(all_desc_keywords)
-
-            # 生成词云
-            # 中文字体设置说明：
-            # 1. 如果系统安装了中文字体，可以指定字体路径，例如：
-            #    font_path = "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc"  # Linux
-            #    font_path = "C:/Windows/Fonts/msyh.ttc"  # Windows (微软雅黑)
-            #    font_path = "/System/Library/Fonts/PingFang.ttc"  # macOS
-            # 2. 如果不指定字体，中文可能显示为方块
-            # 3. 推荐在部署时确保系统有中文字体支持
-
-            try:
-                # 尝试使用系统字体（根据操作系统选择）
-                import platform
-
-                system = platform.system()
-                if system == "Windows":
-                    font_path = "C:/Windows/Fonts/msyh.ttc"
-                elif system == "Darwin":  # macOS
-                    font_path = "/System/Library/Fonts/PingFang.ttc"
-                else:  # Linux
-                    font_path = "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc"
-
-                wc_desc = WordCloud(
-                    width=800,
-                    height=400,
-                    background_color="white",
-                    font_path=font_path,
-                    max_words=100,
-                    colormap="viridis",
-                ).generate_from_frequencies(desc_freq)
-            except Exception:
-                # 如果字体加载失败，使用默认设置
-                wc_desc = WordCloud(
-                    width=800,
-                    height=400,
-                    background_color="white",
-                    max_words=100,
-                    colormap="viridis",
-                ).generate_from_frequencies(desc_freq)
-
-            fig, ax = plt.subplots(figsize=(10, 5))
-            ax.imshow(wc_desc, interpolation="bilinear")
-            ax.axis("off")
-            st.pyplot(fig)
-
-            # 显示词频统计
-            with st.expander("查看关键词词频 (Top 20)"):
-                top_desc = pd.DataFrame(
-                    desc_freq.most_common(20), columns=["关键词", "频次"]
-                )
-                st.dataframe(top_desc, use_container_width=True)
-        else:
-            st.info("暂无职位描述关键词数据")
+        plot_wordcloud_in_streamlit(
+            all_desc_keywords, title="职位描述关键词", cmap="viridis"
+        )
 
     with col2:
-        st.markdown("#### 职位要求关键词")
-        if all_req_keywords:
-            req_freq = Counter(all_req_keywords)
-
-            try:
-                import platform
-
-                system = platform.system()
-                if system == "Windows":
-                    font_path = "C:/Windows/Fonts/msyh.ttc"
-                elif system == "Darwin":
-                    font_path = "/System/Library/Fonts/PingFang.ttc"
-                else:
-                    font_path = "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc"
-
-                wc_req = WordCloud(
-                    width=800,
-                    height=400,
-                    background_color="white",
-                    font_path=font_path,
-                    max_words=100,
-                    colormap="plasma",
-                ).generate_from_frequencies(req_freq)
-            except Exception:
-                wc_req = WordCloud(
-                    width=800,
-                    height=400,
-                    background_color="white",
-                    max_words=100,
-                    colormap="plasma",
-                ).generate_from_frequencies(req_freq)
-
-            fig, ax = plt.subplots(figsize=(10, 5))
-            ax.imshow(wc_req, interpolation="bilinear")
-            ax.axis("off")
-            st.pyplot(fig)
-
-            with st.expander("查看关键词词频 (Top 20)"):
-                top_req = pd.DataFrame(
-                    req_freq.most_common(20), columns=["关键词", "频次"]
-                )
-                st.dataframe(top_req, use_container_width=True)
-        else:
-            st.info("暂无职位要求关键词数据")
+        plot_wordcloud_in_streamlit(
+            all_req_keywords, title="职位要求关键词", cmap="plasma"
+        )
 
 # ============================================================
 # Tab 6: 原始数据
