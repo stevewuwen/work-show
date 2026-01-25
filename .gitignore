@@ -4,3 +4,6 @@ test*.json
 test.*
 config/settings.yaml
 **/*.pyc
+SimHei.ttf
+job_info.sqlite-wal
+job_info.sqlite-shm
