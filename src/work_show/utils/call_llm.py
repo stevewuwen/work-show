@@ -1,10 +1,12 @@
 import json
-from google import genai
 import os
+from typing import Protocol, Type, TypeVar
+
 import yaml
-from pydantic import BaseModel
-from typing import Type, TypeVar, Protocol
+from google import genai
 from openai import OpenAI
+from pydantic import BaseModel
+
 from .logger import get_logger
 
 logger = get_logger("call_llm")
@@ -86,6 +88,37 @@ def get_deepseek_json_res(cls: Type[T], system_prompt: str, user_prompt: str) ->
 
     except Exception as e:
         logger.error(f"Gemini API Error: {e}")
+        # 如果解析失败或者API报错，抛出异常让上层处理，或者返回None
+        raise e
+
+
+@_register_model("doubao")
+def get_doubao_json_res(cls: Type[T], system_prompt: str, user_prompt: str) -> T:
+    global _client
+    if not _client:
+        _client = OpenAI(
+            api_key="4a05c8c7-1088-4862-a16c-e980b307ab8d",
+            base_url="https://ark.cn-beijing.volces.com/api/coding/v3",
+        )
+    try:
+        # 在 google.genai SDK 中，system_instruction 放在 config 中
+        response = _client.chat.completions.create(
+            model="ark-code-latest",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {
+                    "role": "user",
+                    "content": user_prompt,
+                },
+            ],
+            # response_format={"type": "json_object"},
+        )
+
+        # 解析返回结果
+        return cls.model_validate_json(response.choices[0].message.content)
+
+    except Exception as e:
+        print(f"{e}")
         # 如果解析失败或者API报错，抛出异常让上层处理，或者返回None
         raise e
 

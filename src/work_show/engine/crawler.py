@@ -46,6 +46,8 @@ class CrawlerEngine:
     def _action_save(self, item, args=None):
         try:
             item = self.source.extract_by_llm(item)
+            if not item:
+                pass
             self.storage.save(item)
             self.total_saved += 1
             logger.info(f"{self.source.__class__.__name__}写入成功")
